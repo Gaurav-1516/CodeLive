@@ -3,7 +3,6 @@ import './App.css';
 import io from 'socket.io-client';
 import Editor from '@monaco-editor/react';
 
-
 const socket = io("http://localhost:5000")
 
 const App = () => {
@@ -45,7 +44,8 @@ const App = () => {
   useEffect(()=>{
     const handleBeforeUnload = () => {
       socket.emit("leaveRoom");
-    }
+    };
+
     window.addEventListener("beforeunload",handleBeforeUnload);
 
     return () => {
@@ -58,7 +58,7 @@ const App = () => {
       socket.emit("join",{roomId,userName})
       setJoined(true);
     }
-  }
+  };
 
   const leaveRoom = () => {
     socket.emit("leaveRoom");
@@ -67,7 +67,7 @@ const App = () => {
     setUserName("");
     setCode("# start code here");
     setLanguage("python");
-  }
+  };
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -97,7 +97,7 @@ const App = () => {
           <button onClick={joinRoom}>Join Room</button>
         </div>
       </div>
-    ) 
+    );
   }
 
   return (
@@ -106,6 +106,7 @@ const App = () => {
         <div className="room-info">
           <h2>Code Room ID: {roomId}</h2>
           <button onClick={copyRoomId} className='copy-button'>Copy ID</button>
+          {copySuccess && <span className="copy-success">{copySuccess}</span>}
         </div>
         <h3>Current Users in Room:</h3>
         <ul>
