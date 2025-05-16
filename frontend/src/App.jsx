@@ -30,10 +30,15 @@ const App = () => {
       setTimeout(()=>setTyping(""),2000);
     });
 
+    socket.on("languageUpdate",(newLanguage)=>{
+      setLanguage(newLanguage);
+    });
+
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
       socket.off("userTyping");
+      socket.off("languageUpdate");
     };
   },[]);
 
@@ -67,6 +72,12 @@ const App = () => {
     socket.emit("typing",{roomId,userName});
   };
 
+  const handleLanguageChange = (e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+    socket.emit("languageChange",{roomId,language: newLanguage});
+  };
+
   if(!joined){
     return (
       <div className='join-container'>
@@ -96,7 +107,7 @@ const App = () => {
         <p className='typing-indicator'>{typing}</p>
         <select className='language-selector'
         value={language}
-        onChange={(e)=> setLanguage(e.target.value)}
+        onChange={handleLanguageChange}
         >
           <option value="javascript">JavaScript</option>
           <option value="python">Python</option>
