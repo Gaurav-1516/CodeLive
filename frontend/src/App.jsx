@@ -11,7 +11,7 @@ const App = () => {
   const [roomId,setRoomId] = useState("");
   const [userName,setUserName] = useState("");
   const [language,setLanguage] = useState("python");
-  const [code,setCode] = useState("");
+  const [code,setCode] = useState("# start code here");
   const [users, setUsers] = useState([]);
   const [copySuccess, setCopySuccess] = useState("");
   const [typing, setTyping] = useState("");
@@ -58,6 +58,15 @@ const App = () => {
       socket.emit("join",{roomId,userName})
       setJoined(true);
     }
+  }
+
+  const leaveRoom = () => {
+    socket.emit("leaveRoom");
+    setJoined(false);
+    setRoomId("");
+    setUserName("");
+    setCode("# start code here");
+    setLanguage("python");
   }
 
   const copyRoomId = () => {
@@ -114,7 +123,7 @@ const App = () => {
           <option value="java">Java</option>
           <option value="cpp">C++</option>
         </select>
-        <button className='leave-button'>Leave Room</button>
+        <button className='leave-button' onClick={leaveRoom}>Leave Room</button>
       </div>
 
       <div className="editor-wrapper">
