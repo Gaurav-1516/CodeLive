@@ -13,6 +13,8 @@ const App = () => {
   const [language,setLanguage] = useState("python");
   const [code,setCode] = useState("");
   const [users, setUsers] = useState([]);
+  const [copySuccess, setCopySuccess] = useState("");
+  const [typing, setTyping] = useState("");
 
   useEffect(()=>{
     socket.on("userJoined",(users)=>{
@@ -23,9 +25,15 @@ const App = () => {
       setCode(newCode);
     })
 
+    socket.on("userTyping",(user)=>{
+      setTyping(`${user.slice(0,8)}.... is typing`);
+      setTimeout(()=>setTyping(""),2000);
+    });
+
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
+      socket.off("userTyping");
     };
   },[]);
 
@@ -47,11 +55,16 @@ const App = () => {
     }
   }
 
-  const copyRoomId = () => {};
+  const copyRoomId = () => {
+    navigator.clipboard.writeText(roomId);
+    setCopySuccess("Copied!");
+    setTimeout(() => setCopySuccess(""),2000);
+  };
 
   const handleCodeChange = (newCode) => {
     setCode(newCode);
-    socket.emit("codeChange",{roomId,code: newCode})
+    socket.emit("codeChange",{roomId,code: newCode});
+    socket.emit("typing",{roomId,userName});
   };
 
   if(!joined){
@@ -80,7 +93,7 @@ const App = () => {
               <li key = {index}>{user.slice(0,8)}...</li>
             ))}
         </ul>
-        <p className='typing-indicator'>User typing.....</p>
+        <p className='typing-indicator'>{typing}</p>
         <select className='language-selector'
         value={language}
         onChange={(e)=> setLanguage(e.target.value)}
