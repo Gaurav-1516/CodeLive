@@ -16,6 +16,7 @@ const App = () => {
   const [typing, setTyping] = useState("");
   const [output,setOutput] = useState("");
   const [version, setVersion] = useState("*");
+  const [input, setInput] = useState("");
 
   useEffect(()=>{
     socket.on("userJoined",(users)=>{
@@ -95,7 +96,7 @@ const App = () => {
   };
 
   const runCode = () => {
-    socket.emit("compileCode",{code,roomId,language,version});
+    socket.emit("compileCode",{code,roomId,language,version,input: input});
   };
 
   if(!joined){
@@ -150,6 +151,7 @@ const App = () => {
             fontSize: 14,
           }}
         />
+        <textarea className='input-console' value={input} onChange={e => setInput(e.target.value)} placeholder='Enter your input...'></textarea>
         <button className='run-btn' onClick={runCode}>Execute</button>
         <textarea className='output-console' value={output} readOnly placeholder='Your Output will appear here.'></textarea>
       </div>

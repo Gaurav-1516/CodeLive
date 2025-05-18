@@ -15,7 +15,6 @@ const io = new Server(server, {
 
 const rooms = new Map();
 
-
 io.on("connection",(socket)=>{
     console.log("Client Connected", socket.id);
 
@@ -25,8 +24,8 @@ io.on("connection",(socket)=>{
     socket.on("join",({roomId,userName})=>{
         if(currentRoom){
             socket.leave(currentRoom);
-            rooms.get(currentRoom).delete(currentUser);
-            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+            rooms.get(currentRoom).users.delete(currentUser);
+            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
         }
 
         currentRoom = roomId;
@@ -35,22 +34,28 @@ io.on("connection",(socket)=>{
         socket.join(roomId);
 
         if(!rooms.has(roomId)){
-            rooms.set(roomId, new Set());
+            rooms.set(roomId, {users: new Set(), code: "# Start code here", language: "python"});
         }
 
-        rooms.get(roomId).add(userName);
+        rooms.get(roomId).users.add(userName);
 
-        io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)));
+        socket.emit("codeUpdate", rooms.get(roomId).code);
+        socket.emit("languageChange",rooms.get(roomId).language);
+
+        io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom).users));
     });
 
     socket.on("codeChange",({roomId,code}) => {
+        if(rooms.has(roomId)){
+            rooms.get(roomId).code = code;
+        }
         socket.to(roomId).emit("codeUpdate", code);
     });
 
     socket.on("leaveRoom",() => {
         if(currentRoom && currentUser){
-            rooms.get(currentRoom).delete(currentUser);
-            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+            rooms.get(currentRoom).users.delete(currentUser);
+            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
             
             socket.leave(currentRoom);
 
@@ -64,10 +69,13 @@ io.on("connection",(socket)=>{
     });
 
     socket.on("languageChange",({roomId,language}) =>{
-        io.to(roomId).emit("languageUpdate",language);
+        if(rooms.has(roomId)){
+            rooms.get(roomId).language = language;
+        }
+        socket.to(roomId).emit("languageUpdate",language);
     });
 
-    socket.on("compileCode", async({code, roomId, language, version})=>{
+    socket.on("compileCode", async({code, roomId, language, version, input})=>{
         if(rooms.has(roomId)){
             const room = rooms.get(roomId);
             const response = await axios.post('https://emkc.org/api/v2/piston/execute',{
@@ -77,7 +85,8 @@ io.on("connection",(socket)=>{
                     {
                         content:code
                     }
-                ]
+                ],
+                stdin: input
             });
             room.output = response.data.run.output;
             io.to(roomId).emit("codeResponse",response.data);
@@ -86,8 +95,8 @@ io.on("connection",(socket)=>{
 
     socket.on("disconnect",() => {
         if(currentRoom && currentUser){
-            rooms.get(currentRoom).delete(currentUser);
-            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom)));
+            rooms.get(currentRoom).users.delete(currentUser);
+            io.to(currentRoom).emit("userJoined", Array.from(rooms.get(currentRoom).users));
         }
         console.log("User disconnected");
     });
