@@ -14,6 +14,8 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [copySuccess, setCopySuccess] = useState("");
   const [typing, setTyping] = useState("");
+  const [output,setOutput] = useState("");
+  const [version, setVersion] = useState("*");
 
   useEffect(()=>{
     socket.on("userJoined",(users)=>{
@@ -33,11 +35,16 @@ const App = () => {
       setLanguage(newLanguage);
     });
 
+    socket.on("codeResponse",(response)=>{
+      setOutput(response.run.output);
+    });
+
     return () => {
       socket.off("userJoined");
       socket.off("codeUpdate");
       socket.off("userTyping");
       socket.off("languageUpdate");
+      socket.off("codeResponse");
     };
   },[]);
 
@@ -87,6 +94,10 @@ const App = () => {
     socket.emit("languageChange",{roomId,language: newLanguage});
   };
 
+  const runCode = () => {
+    socket.emit("compileCode",{code,roomId,language,version});
+  };
+
   if(!joined){
     return (
       <div className='join-container'>
@@ -111,7 +122,7 @@ const App = () => {
         <h3>Current Users in Room:</h3>
         <ul>
           {users.map((user,index)=>(
-              <li key = {index}>{user.slice(0,8)}...</li>
+              <li key = {index}>{user}</li>
             ))}
         </ul>
         <p className='typing-indicator'>{typing}</p>
@@ -129,7 +140,7 @@ const App = () => {
 
       <div className="editor-wrapper">
         <Editor
-          height={"100%"}
+          height={"60%"}
           language={language}
           value={code}
           onChange={handleCodeChange}
@@ -139,6 +150,8 @@ const App = () => {
             fontSize: 14,
           }}
         />
+        <button className='run-btn' onClick={runCode}>Execute</button>
+        <textarea className='output-console' value={output} readOnly placeholder='Your Output will appear here.'></textarea>
       </div>
     </div>
   )

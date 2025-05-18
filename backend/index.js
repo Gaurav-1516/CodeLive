@@ -1,3 +1,4 @@
+import axios from 'axios';
 import express from 'express';
 import http from 'http';
 import {Server} from 'socket.io';
@@ -37,10 +38,11 @@ io.on("connection",(socket)=>{
             rooms.set(roomId, new Set());
         }
 
-        rooms.get(roomId).add(userName)
+        rooms.get(roomId).add(userName);
 
         io.to(roomId).emit("userJoined", Array.from(rooms.get(currentRoom)));
     });
+
     socket.on("codeChange",({roomId,code}) => {
         socket.to(roomId).emit("codeUpdate", code);
     });
@@ -63,6 +65,23 @@ io.on("connection",(socket)=>{
 
     socket.on("languageChange",({roomId,language}) =>{
         io.to(roomId).emit("languageUpdate",language);
+    });
+
+    socket.on("compileCode", async({code, roomId, language, version})=>{
+        if(rooms.has(roomId)){
+            const room = rooms.get(roomId);
+            const response = await axios.post('https://emkc.org/api/v2/piston/execute',{
+                language,
+                version,
+                files:[
+                    {
+                        content:code
+                    }
+                ]
+            });
+            room.output = response.data.run.output;
+            io.to(roomId).emit("codeResponse",response.data);
+        }
     });
 
     socket.on("disconnect",() => {

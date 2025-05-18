@@ -157,3 +157,16 @@ body{
     background-color: #fff;
   }
 }
+
+.run-btn{
+  background-color: greenyellow;
+  padding: 10px;
+}
+
+.output-console{
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  font-size: 10px;
+  height: 200px;
+}
